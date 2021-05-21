@@ -1,0 +1,65 @@
+version: '3.7'
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: sso-mariadb
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: wordpress
+    restart: unless-stopped
+    volumes:
+      - mariadb_data:/var/lib/mysql
+  wordpress:
+    image: wordpress
+    container_name: sso-wordpress
+    privileged: true
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wordpress:/var/www/html
+    ports:
+      - 8081:80
+  wordpress-cli:
+    image: wordpress:cli
+    container_name: sso-wordpress-cli
+    user: xfs
+    command: >
+      /bin/sh -c '
+      sleep 10;
+      wp core install --path="/var/www/html" --url="http://localhost:8081" --title="Local Wordpress By Docker" --admin_user=admin --admin_password=admin --admin_email=foo@bar.com --skip-email;
+      wp plugin install daggerhart-openid-connect-generic --activate
+      '
+    depends_on:
+      - mariadb
+      - wordpress
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wordpress:/var/www/html
+  keycloak:
+    image: quay.io/keycloak/keycloak:12.0.4
+    container_name: sso-keycloak
+    restart: always
+    ports:
+        - "8080:8080"
+    environment:
+        KEYCLOAK_PASSWORD: admin
+        KEYCLOAK_USER: admin
+        KEYCLOAK_IMPORT: /tmp/realm.json
+    volumes:
+        - ./realm.json:/tmp/realm.json
+    cap_add: [SYS_NICE]
+volumes:
+  mariadb_data:
+  wordpress:
