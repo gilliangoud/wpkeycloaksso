@@ -482,7 +482,24 @@
       },
       "notBefore": 0,
       "groups": []
-    }
+    },
+    {
+      "username" : "admin",
+      "enabled": true,
+      "email" : "foo@bar.com",
+      "firstName": "Sample",
+      "lastName": "User",
+      "credentials" : [
+          { "type" : "password",
+            "value" : "admin" }
+      ],
+      "realmRoles": [ "default-roles-demo" ],
+      "clientRoles": {
+        "wordpress": [
+          "uma_protection"
+        ]
+      }
+  }
   ],
   "scopeMappings": [
     {
